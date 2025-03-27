@@ -12,7 +12,7 @@ app.use(cors());
 
 app.use(express.json());
 
-// MySQL database connection
+
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -20,7 +20,7 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME,
 });
 
-// Check DB connection
+
 db.connect((err) => {
   if (err) {
     console.error('Database connection failed:', err.stack);
@@ -29,12 +29,12 @@ db.connect((err) => {
   console.log('Connected to the database');
 });
 
-// Generate JWT Token
+
 const generateJWT = (userId, role) => {
   return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRATION });
 };
 
-// Middleware to authenticate JWT Token
+
 const authenticateJWT = (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1];
   if (!token) {
@@ -50,7 +50,7 @@ const authenticateJWT = (req, res, next) => {
   });
 };
 
-// POST /users → Insert a new user (Registration)
+
 app.post('/users', async (req, res) => {
   const { name, email, password, role } = req.body;
   if (!name || !email || !password) {
@@ -58,7 +58,7 @@ app.post('/users', async (req, res) => {
   }
 
   try {
-    // Check if the email already exists
+    
     db.query('SELECT * FROM users WHERE email = ?', [email], async (err, result) => {
       if (err) {
         return res.status(500).json({ message: 'Database error', error: err });
@@ -67,10 +67,10 @@ app.post('/users', async (req, res) => {
         return res.status(400).json({ message: 'Email already exists' });
       }
 
-      // Hash the password before storing
+      
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Insert the user into the database
+      
       db.query(
         'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
         [name, email, hashedPassword, role || 'user'],
@@ -87,7 +87,6 @@ app.post('/users', async (req, res) => {
   }
 });
 
-// GET /users → Fetch all users (authenticated)
 app.get('/users', authenticateJWT, (req, res) => {
   db.query('SELECT id, name, email, role, created_at FROM users', (err, result) => {
     if (err) {
@@ -97,7 +96,7 @@ app.get('/users', authenticateJWT, (req, res) => {
   });
 });
 
-// PUT /users/{id} → Update user details (authenticated)
+
 app.put('/users/:id', authenticateJWT, (req, res) => {
   const { id } = req.params;
   const { name, email, role } = req.body;
@@ -117,7 +116,7 @@ app.put('/users/:id', authenticateJWT, (req, res) => {
   });
 });
 
-// DELETE /users/{id} → Delete a user (authenticated)
+
 app.delete('/users/:id', authenticateJWT, (req, res) => {
   const { id } = req.params;
 
@@ -132,7 +131,7 @@ app.delete('/users/:id', authenticateJWT, (req, res) => {
   });
 });
 
-// POST /login → Login user and generate JWT token
+
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
@@ -160,7 +159,7 @@ app.post('/login', (req, res) => {
   });
 });
 
-// Start the server
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
